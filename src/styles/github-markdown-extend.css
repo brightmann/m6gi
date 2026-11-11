@@ -16,3 +16,7 @@
   --color-highlight: rgb(255 251 221/0.1);
   --color-bg-color: #272727;
 }
+
+.markdown-body iframe {
+  max-width: 100%;
+}
