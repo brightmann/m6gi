@@ -8,7 +8,7 @@ import {
 // TODO: 区分 blog 和 lab
 
 const client = new ApolloClient({
-  uri: 'http://localhost:3000/api/graphql',
+  uri: process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql',
   cache: new InMemoryCache(),
   // Enable sending cookies over cross-origin requests
   credentials: 'include',
