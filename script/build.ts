@@ -13,7 +13,7 @@ const isAdminRun = () => {
     const timer = setTimeout(() => {
       execSh('yarn healthcheck', { cwd: './admin' }, (err) => {
         if (err) {
-          if (count === 5) {
+          if (count === 90) {
             reject(err)
           } else {
             count++
