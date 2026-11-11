@@ -17,6 +17,8 @@ import { cx } from '@emotion/css'
 import { copyToClipboardFromNode } from '@/utils'
 import rehypePrism from 'rehype-prism-plus'
 import rehypeClassNames from 'rehype-class-names'
+import rehypeRaw from 'rehype-raw'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 
 const PreElement: React.FC<PropsWithChildren<{}>> = ({ children, ...rest }) => {
   const [showCopyBtn, setShowCopyBtn] = useState(false)
@@ -75,8 +77,47 @@ const CopyButton: React.FC<{
   )
 }
 
+// Raw HTML in posts is parsed, sanitized, and limited to safe tags; iframes
+// are additionally restricted to https YouTube embeds (per-site allowlisting
+// happens on request, never all iframes open).
+const sanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames || []), 'iframe'],
+  attributes: {
+    ...defaultSchema.attributes,
+    iframe: [
+      'src',
+      'width',
+      'height',
+      'title',
+      'allow',
+      'loading',
+      'frameBorder',
+      'allowFullScreen',
+      'referrerPolicy',
+    ],
+  },
+}
+
+const isAllowedIframeSrc = (src: unknown) =>
+  typeof src === 'string' &&
+  /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\//.test(src)
+
+const rehypeYoutubeIframesOnly = () => (tree: any) => {
+  const walk = (node: any) => {
+    if (!node || !Array.isArray(node.children)) return
+    node.children = node.children.filter(
+      (child: any) =>
+        child.tagName !== 'iframe' || isAllowedIframeSrc(child.properties?.src)
+    )
+    node.children.forEach(walk)
+  }
+  walk(tree)
+}
+
 const Article: React.FC<{ post: Post }> = ({ post }) => {
   const reactContent = useRemarkSync(post.content, {
+    remarkToRehypeOptions: { allowDangerousHtml: true },
     remarkPlugins: [
       remarkGfm,
       [
@@ -85,6 +126,9 @@ const Article: React.FC<{ post: Post }> = ({ post }) => {
       ],
     ],
     rehypePlugins: [
+      rehypeRaw,
+      [rehypeSanitize, sanitizeSchema],
+      rehypeYoutubeIframesOnly,
       [rehypeExternalLinks, { target: '_blank' }],
       rehypeSlug,
       rehypeAutolinkHeadings,
