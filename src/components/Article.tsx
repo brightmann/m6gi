@@ -78,8 +78,9 @@ const CopyButton: React.FC<{
 }
 
 // Raw HTML in posts is parsed, sanitized, and limited to safe tags; iframes
-// are additionally restricted to https YouTube embeds (per-site allowlisting
-// happens on request, never all iframes open).
+// are additionally restricted to https embeds from allowlisted hosts
+// (YouTube, Youku, Videa; per-site allowlisting happens on request, never
+// all iframes open).
 const sanitizeSchema = {
   ...defaultSchema,
   tagNames: [...(defaultSchema.tagNames || []), 'iframe'],
@@ -99,12 +100,28 @@ const sanitizeSchema = {
   },
 }
 
-const isAllowedIframeSrc = (src: unknown) =>
-  typeof src === 'string' &&
-  /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\//.test(src)
- /^https:\/\/(www\.)?(youku\.com)\//.test(src)
-/^https:\/\/(www\.)?(videa\.hu)\//.test(src)
-const rehypeYoutubeIframesOnly = () => (tree: any) => {
+const allowedIframeHosts = [
+  'youtube.com',
+  'www.youtube.com',
+  'youtube-nocookie.com',
+  'www.youtube-nocookie.com',
+  'player.youku.com',
+  'videa.hu',
+  'www.videa.hu',
+]
+
+const isAllowedIframeSrc = (src: unknown) => {
+  if (typeof src !== 'string') return false
+  // Protocol-relative embed URLs (//host/...) are https on this https site
+  const normalized = src.startsWith('//') ? `https:${src}` : src
+  try {
+    const url = new URL(normalized)
+    return url.protocol === 'https:' && allowedIframeHosts.includes(url.hostname)
+  } catch {
+    return false
+  }
+}
+const rehypeAllowlistedIframesOnly = () => (tree: any) => {
   const walk = (node: any) => {
     if (!node || !Array.isArray(node.children)) return
     node.children = node.children.filter(
@@ -129,7 +146,7 @@ const Article: React.FC<{ post: Post }> = ({ post }) => {
     rehypePlugins: [
       rehypeRaw,
       [rehypeSanitize, sanitizeSchema],
-      rehypeYoutubeIframesOnly,
+      rehypeAllowlistedIframesOnly,
       [rehypeExternalLinks, { target: '_blank' }],
       rehypeSlug,
       rehypeAutolinkHeadings,
