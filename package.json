@@ -32,6 +32,8 @@
     "rehype-external-links": "^2.0.1",
     "rehype-figure": "^1.0.1",
     "rehype-prism-plus": "^1.5.0",
+    "rehype-raw": "^6.1.1",
+    "rehype-sanitize": "^5.0.1",
     "rehype-slug": "^5.1.0",
     "remark": "14.0.2",
     "remark-gfm": "1.0.0",
