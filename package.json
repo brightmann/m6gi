@@ -31,7 +31,7 @@
     "rehype-class-names": "^1.0.14",
     "rehype-external-links": "^2.0.1",
     "rehype-figure": "^1.0.1",
-    "rehype-prism-plus": "marsk6/rehype-prism-plus#feat/diff-code-option",
+    "rehype-prism-plus": "^1.5.0",
     "rehype-slug": "^5.1.0",
     "remark": "14.0.2",
     "remark-gfm": "1.0.0",
