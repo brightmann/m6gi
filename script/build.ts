@@ -27,6 +27,11 @@ const isAdminRun = () => {
   })
 }
 const main = async () => {
+  if (process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL) {
+    console.log('Building from the hosted CMS')
+    await execSh.promise('yarn next:build')
+    return
+  }
   console.log('---------------- start admin ----------------')
   const childProcess = execSh('yarn keystone:start > keystone-start.log 2>&1', { cwd: './admin' })
 
