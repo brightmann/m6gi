@@ -28,9 +28,15 @@ const isAdminRun = () => {
 }
 const main = async () => {
   console.log('---------------- start admin ----------------')
-  const childProcess = execSh('yarn keystone:start', { cwd: './admin' })
+  const childProcess = execSh('yarn keystone:start > keystone-start.log 2>&1', { cwd: './admin' })
 
-  await isAdminRun()
+  try {
+    await isAdminRun()
+  } catch (e) {
+    console.log('---------------- keystone start log (last 300 lines) ----------------')
+    await execSh.promise('tail -300 ./admin/keystone-start.log || true')
+    throw e
+  }
 
   console.log('---------------- to next deploy ----------------')
 
