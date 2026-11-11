@@ -102,7 +102,8 @@ const sanitizeSchema = {
 const isAllowedIframeSrc = (src: unknown) =>
   typeof src === 'string' &&
   /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\//.test(src)
-
+ /^https:\/\/(www\.)?(youku\.com)\//.test(src)
+/^https:\/\/(www\.)?(videa\.hu)\//.test(src)
 const rehypeYoutubeIframesOnly = () => (tree: any) => {
   const walk = (node: any) => {
     if (!node || !Array.isArray(node.children)) return
