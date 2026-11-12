@@ -14,7 +14,7 @@ const client = new ApolloClient({
   credentials: 'include',
 })
 
-export const pageSize = 2
+export const pageSize = 5
 
 export async function getPostBySlug(slug: string) {
   const {
