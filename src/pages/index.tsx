@@ -1,16 +1,4 @@
-import { getAllPosts, getTags } from '@/api/local'
-import Link from 'next/link'
-import { NextSeo, ArticleJsonLd } from 'next-seo'
-import { cx } from '@emotion/css'
-import { useSetSider } from '@/layout/Sider'
-import Card from '@/components/Card'
-import Chip from '@/components/ui/Chip'
-
-export type PageProps = {
-  posts: { [year: string]: Post[] }
-  years: number[]
-  tags: Array<{ name: string; postsCount: number }>
-}
+import { getAllPosts, pageSize } from '@/api/local'
 import { NextSeo, ArticleJsonLd } from 'next-seo'
 import PostList, { groupPostsByYear, GroupedPosts } from '@/components/PostList'
 import Pagination from '@/components/ui/Pagination'
