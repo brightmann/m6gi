@@ -11,72 +11,17 @@ export type PageProps = {
   years: number[]
   tags: Array<{ name: string; postsCount: number }>
 }
+import { NextSeo, ArticleJsonLd } from 'next-seo'
+import PostList, { groupPostsByYear, GroupedPosts } from '@/components/PostList'
+import Pagination from '@/components/ui/Pagination'
 
-const Home: React.FC<PageProps> = ({ posts, tags }) => {
-  // useSetSider(() => (
-  //   <Card className="flex flex-col gap-2 items-start">
-  //     {tags.map((tag) => {
-  //       return <Chip key={tag.name} sup={tag.postsCount} name={tag.name}></Chip>
-  //     })}
-  //   </Card>
-  // ))
-  const items = Object.keys(posts)
-    .sort((a, b) => b - a)
-    .map((year) => {
-      return (
-        <section key={year}>
-          <header
-            className={cx(
-              'font-medium',
-              'text-3xl text-center mb-2',
-              'md:text-2xl md:text-left'
-            )}
-          >
-            {year}
-          </header>
-          {posts[year].map((post) => (
-            <article
-              className={cx(
-                'flex items-center',
-                'text-xl my-6 leading-10',
-                'md:text-lg md:mb-0 md:mt-4'
-              )}
-              key={post.slug}
-            >
-              <Link
-                passHref
-                legacyBehavior
-                href={{
-                  pathname: '/posts/[slug]',
-                  query: { slug: post.slug },
-                }}
-              >
-                <a
-                  className={cx(
-                    'text-slate-900 dark:text-[#c9d1d9] font-medium',
-                    'md:ml-6',
-                    'leading-normal',
-                    'text-underline'
-                  )}
-                >
-                  {post.title}
-                </a>
-              </Link>
-              <div className="hidden md:block flex-1 border-dashed border-slate-300 border-t mx-3" />
-              <div
-                className={cx(
-                  'w-16 text-slate-500 dark:text-slate-200',
-                  'hidden text-base',
-                  'md:block',
-                )}
-              >
-                {post.date}
-              </div>
-            </article>
-          ))}
-        </section>
-      )
-    })
+export type PageProps = {
+  posts: GroupedPosts
+  pageNum: number
+  totalPage: number
+}
+
+const Home: React.FC<PageProps> = ({ posts, pageNum, totalPage }) => {
   return (
     <>
       <NextSeo
@@ -94,7 +39,12 @@ const Home: React.FC<PageProps> = ({ posts, tags }) => {
         authorName="marsk"
         description="记录自己的前端工作总结，学习积累，技术思考，疑难问题"
       />
-      <section className="flex flex-col gap-8 md:gap-8">{items}</section>
+      <PostList posts={posts} />
+      {totalPage > 1 && (
+        <nav className="flex justify-center my-8">
+          <Pagination pageNum={pageNum} totalPage={totalPage} />
+        </nav>
+      )}
     </>
   )
 }
@@ -102,16 +52,10 @@ const Home: React.FC<PageProps> = ({ posts, tags }) => {
 export default Home
 
 export const getStaticProps = async () => {
-  const [allPosts, tags] = await Promise.all([getAllPosts(), getTags()])
-  const posts: Record<number, Post[]> = {}
-  allPosts.forEach((post) => {
-    const year = new Date(post.ctime).getFullYear()
-    if (!posts[year]) {
-      posts[year] = []
-    }
-    posts[year].push(post)
-  })
+  const allPosts = await getAllPosts()
+  const totalPage = Math.max(1, Math.ceil(allPosts.length / pageSize))
+  const posts = groupPostsByYear(allPosts.slice(0, pageSize))
   return {
-    props: { posts, tags },
+    props: { posts, pageNum: 1, totalPage },
   }
 }
