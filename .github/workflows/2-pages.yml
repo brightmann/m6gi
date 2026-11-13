@@ -1,0 +1,65 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  repository_dispatch:
+    types: [admin-update-event]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_CMS_GRAPHQL_URL: https://mba-q57t.onrender.com/api/graphql
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Use the GitHub Pages config
+        run: |
+          cp next.config.pages.js next.config.js
+          node -e "const fs=require('fs');const c=require('./next-sitemap.config.js');c.siteUrl='https://brightmann.github.io/m6gi';fs.writeFileSync('./next-sitemap.config.js','module.exports = '+JSON.stringify(c,null,2)+'\n')"
+      - name: Wake the CMS (Render free plan sleeps)
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$NEXT_PUBLIC_CMS_GRAPHQL_URL" -H 'Content-Type: application/json' -d '{"query":"{ posts { slug } }"}' --max-time 30 || true)
+            if [ "$code" = "200" ]; then echo "CMS is awake"; exit 0; fi
+            echo "waiting for CMS (got: $code)"; sleep 10
+          done
+          echo "CMS did not wake in time"; exit 1
+      - name: Build and export
+        run: yarn build
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
